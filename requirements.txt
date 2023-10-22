@@ -4,3 +4,4 @@ pydeck
 altair 
 folium
 streamlit_folium 
+requests
