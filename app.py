@@ -272,6 +272,8 @@ def map_elec():
     st.subheader("If you have an electric vehicle!")
     folium_static(m)
 
+map_elec()
+
 def ratio_electrique():
     # Create a new column "Electric Ratios" for the number of electric vehicle spaces relative to total spaces
     parking_data['Electric Ratios'] = parking_data['nb_voitures_electriques'] / parking_data['nb_places']
@@ -288,6 +290,8 @@ def ratio_electrique():
     )
 
     histogram_ratios_electriques
+
+ratio_electrique()
 
 def map_velo():
     # Create a Folium map centered on an initial location (e.g., Paris)
@@ -308,6 +312,7 @@ def map_velo():
     folium_static(m)
 
 
+map_velo()
 
 def ratio_velo():
     # Calculate the ratios
@@ -327,6 +332,7 @@ def ratio_velo():
 
     scatter_ratio_velo
 
+ratio_velo()
 
 def sidebar():
     # Sidebar for links LinkedIn and GitHub
@@ -339,7 +345,7 @@ def sidebar():
     st.sidebar.markdown(f"[LinkedIn]({linkedin_link})")
     st.sidebar.markdown(f"[Github]({github_link})")
 
-
+sidebar()
 
 
 
