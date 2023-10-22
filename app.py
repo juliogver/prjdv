@@ -1,9 +1,24 @@
 import streamlit as st
 import pandas as pd
 import pydeck as pdk
-
-# Load the CSV file
-parking_data = pd.read_csv("parking.csv")
+import requests
+from io import StringIO
+def load_data():
+    api_url = "https://www.data.gouv.fr/fr/datasets/r/e32f7675-913b-4e01-b8c8-0a29733e4407"
+    response = requests.get(api_url)
+    
+    if response.status_code == 200:
+        try:
+            parking_data = pd.read_csv(StringIO(response.text), low_memory = False)
+            return parking_data
+        except pd.errors.ParserError as e:
+            st.error(f"Failed to parse data. Parser error: {str(e)}")
+            return None
+    else:
+        st.error(f"Failed to fetch data. Status code: {response.status_code}")
+        return None
+    
+parking_data = load_data()    
 
 department_coordinates = {
     '69': (45.75, 4.85),   # Lyon, Rhône
