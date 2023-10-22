@@ -156,6 +156,7 @@ def map(selected_department):
             st.pydeck_chart(location_pydeck_map)
 map(selected_department)
 
+
 # Convert the 'insee' column to strings
 parking_data['Department'] = parking_data['insee'].astype(str)
 
@@ -172,17 +173,20 @@ free_parking_counts_by_department.columns = ['Department', 'Number of Free Parki
 # Create a list of unique departments with free parking spots
 departments_with_free_parking = free_parking_data['Department'].str[:2].unique()
 
-
-
 # Filter free parking data for the selected department
 selected_department_free_parking_data = free_parking_data[free_parking_data['Department'].str[:2] == selected_department]
 
-# Display the names of free parking spots for the selected department
-if not selected_department_free_parking_data.empty:
-    st.subheader(f"Free Parking Spots in Department {selected_department}")
-    st.table(selected_department_free_parking_data[['nom', 'adresse','nb_places','type_ouvrage','info']])
-else:
-    st.write(f"No Free Parking Spots found in Department {selected_department}")
+@st.cache_data()
+def have_free_parking(selected_department):
+    # Display the names of free parking spots for the selected department
+    if not selected_department_free_parking_data.empty:
+        st.subheader(f"Free Parking Spots in Department {selected_department}")
+        st.table(selected_department_free_parking_data[['nom', 'adresse','nb_places','type_ouvrage','info']])
+    else:
+        st.write(f"No Free Parking Spots found in Department {selected_department}")
+
+have_free_parking(selected_department)
+
 st.subheader("-------------------------------------------------------------------------------")
 
 st.header("Where to find a free parking ?")
@@ -191,62 +195,78 @@ st.header("Where to find a free parking ?")
 # Display a bar chart for the number of free parking spots by department
 st.subheader("Free Parking Spots by Department")
 st.bar_chart(free_parking_counts_by_department.set_index('Department'))
+
+
 st.subheader("-------------------------------------------------------------------------------")
+
+
 st.header("Cheapest Parking Spots")
 # Create a selectbox to choose the parking tariff duration
 selected_tariff_duration = st.selectbox("Select Tariff Duration", ['tarif_1h', 'tarif_2h', 'tarif_3h', 'tarif_4h', 'tarif_24h'])
 
-# Filter parking data for the selected department
-selected_department_parking_data = parking_data[parking_data['Department'].str[:2] == selected_department]
+@st.cache_data()
+def cheapest_parking_spots(selected_department, selected_tariff_duration):
 
-# Exclude the free parking spots from the selected department
-selected_department_parking_data = selected_department_parking_data[~selected_department_parking_data['nom'].isin(selected_department_free_parking_data['nom'])]
 
-# Filter parking spots with tariffs greater than zero for the selected duration
-selected_department_parking_data = selected_department_parking_data[selected_department_parking_data[selected_tariff_duration] > 0]
+    # Filter parking data for the selected department
+    selected_department_parking_data = parking_data[parking_data['Department'].str[:2] == selected_department]
 
-# Sort the parking data by the selected tariff duration in ascending order
-selected_department_parking_data = selected_department_parking_data.sort_values(by=selected_tariff_duration, ascending=True)
+    # Exclude the free parking spots from the selected department
+    selected_department_parking_data = selected_department_parking_data[~selected_department_parking_data['nom'].isin(selected_department_free_parking_data['nom'])]
 
-# Display the names and tariffs of the 10 cheapest parking spots
-if not selected_department_parking_data.empty:
-    # Format the tariff column to include the euro symbol
-    selected_department_parking_data[selected_tariff_duration] = selected_department_parking_data[selected_tariff_duration].apply(lambda x: f"{x:.2f} €")
-    st.table(selected_department_parking_data[['nom','adresse',selected_tariff_duration,'nb_places','hauteur_max','info']].head(5))
-else:
-    st.write(f"No Parking Spots found in Department {selected_department}")
+    # Filter parking spots with tariffs greater than zero for the selected duration
+    selected_department_parking_data = selected_department_parking_data[selected_department_parking_data[selected_tariff_duration] > 0]
+
+    # Sort the parking data by the selected tariff duration in ascending order
+    selected_department_parking_data = selected_department_parking_data.sort_values(by=selected_tariff_duration, ascending=True)
+
+    # Display the names and tariffs of the 10 cheapest parking spots
+    if not selected_department_parking_data.empty:
+        # Format the tariff column to include the euro symbol
+        selected_department_parking_data[selected_tariff_duration] = selected_department_parking_data[selected_tariff_duration].apply(lambda x: f"{x:.2f} €")
+        st.table(selected_department_parking_data[['nom','adresse',selected_tariff_duration,'nb_places','hauteur_max','info']].head(5))
+    else:
+        st.write(f"No Parking Spots found in Department {selected_department}")
+
+cheapest_parking_spots(selected_department, selected_tariff_duration)
+
 st.subheader("-------------------------------------------------------------------------------")
+
 # Create a selectbox to choose the vehicle type
 selected_vehicle_type = st.selectbox("Select Vehicle Type", ['moto', 'voiture', 'camionette', 'camion'])
 
 st.header("Parking Spots for Selected Vehicle Type")
-# Filter parking data for the selected department
-selected_department_parking_data = parking_data[parking_data['Department'].str[:2] == selected_department]
 
-# Filter parking data based on vehicle type and height restrictions
-if selected_vehicle_type == 'camionette':
-    selected_department_parking_data = selected_department_parking_data[selected_department_parking_data['hauteur_max'] > 170]
-elif selected_vehicle_type == 'camion':
-    selected_department_parking_data = selected_department_parking_data[selected_department_parking_data['hauteur_max'] > 380]
+@st.cache_data()
+def select_vehicle(selected_department, selected_vehicle_type, selected_tariff_duration):
+    # Filter parking data for the selected department
+    selected_department_parking_data = parking_data[parking_data['Department'].str[:2] == selected_department]
 
-# Check if the parking spots have a "type_ouvrage" of "enclos_en_surface" and no height restrictions
-if selected_vehicle_type == 'moto' or selected_vehicle_type == 'voiture':
-    selected_department_parking_data = selected_department_parking_data[(selected_department_parking_data['type_ouvrage'] == 'enclos_en_surface') | (selected_department_parking_data['hauteur_max'].isna())]
+    # Filter parking data based on vehicle type and height restrictions
+    if selected_vehicle_type == 'camionette':
+        selected_department_parking_data = selected_department_parking_data[selected_department_parking_data['hauteur_max'] > 170]
+    elif selected_vehicle_type == 'camion':
+        selected_department_parking_data = selected_department_parking_data[selected_department_parking_data['hauteur_max'] > 380]
 
-# Sort the parking data by the selected tariff duration in ascending order
-selected_department_parking_data = selected_department_parking_data.sort_values(by=selected_tariff_duration, ascending=True)
+    # Check if the parking spots have a "type_ouvrage" of "enclos_en_surface" and no height restrictions
+    if selected_vehicle_type == 'moto' or selected_vehicle_type == 'voiture':
+        selected_department_parking_data = selected_department_parking_data[(selected_department_parking_data['type_ouvrage'] == 'enclos_en_surface') | (selected_department_parking_data['hauteur_max'].isna())]
 
-# Display the parking spots
-if not selected_department_parking_data.empty:
-    st.write(f"Parking Spots for {selected_vehicle_type}s :")
-    
-    # Display the height restriction only for camionette and camion
-    if selected_vehicle_type == 'camionette' or selected_vehicle_type == 'camion' or selected_vehicle_type == 'moto' or selected_vehicle_type == 'voiture':
-        st.table(selected_department_parking_data[['nom', 'adresse', 'hauteur_max', 'nb_places', 'info']].head(5))
+    # Sort the parking data by the selected tariff duration in ascending order
+    selected_department_parking_data = selected_department_parking_data.sort_values(by=selected_tariff_duration, ascending=True)
+
+    # Display the parking spots
+    if not selected_department_parking_data.empty:
+        st.write(f"Parking Spots for {selected_vehicle_type}s :")
+        
+        # Display the height restriction only for camionette and camion
+        if selected_vehicle_type == 'camionette' or selected_vehicle_type == 'camion' or selected_vehicle_type == 'moto' or selected_vehicle_type == 'voiture':
+            st.table(selected_department_parking_data[['nom', 'adresse', 'hauteur_max', 'nb_places', 'info']].head(5))
+        else:
+            st.table(selected_department_parking_data[['nom', 'adresse', 'nb_places', 'info']].head(5))
     else:
-        st.table(selected_department_parking_data[['nom', 'adresse', 'nb_places', 'info']].head(5))
-else:
-    st.write(f"No Parking Spots found for {selected_vehicle_type} in Department {selected_department}")
+        st.write(f"No Parking Spots found for {selected_vehicle_type} in Department {selected_department}")
+select_vehicle(selected_department, selected_vehicle_type, selected_tariff_duration)
 
 st.subheader("-------------------------------------------------------------------------------")
 
@@ -254,6 +274,7 @@ import altair as alt
 import folium
 from streamlit_folium import folium_static
 
+@st.cache_data()
 def map_elec():
     # Create a Folium map centered on an initial location (e.g., Paris)
     m = folium.Map(location=[48.8566, 2.3522], zoom_start=12)
@@ -274,6 +295,7 @@ def map_elec():
 
 map_elec()
 
+@st.cache_data()
 def ratio_electrique():
     # Create a new column "Electric Ratios" for the number of electric vehicle spaces relative to total spaces
     parking_data['Electric Ratios'] = parking_data['nb_voitures_electriques'] / parking_data['nb_places']
@@ -293,6 +315,7 @@ def ratio_electrique():
 
 ratio_electrique()
 
+@st.cache_data()
 def map_velo():
     # Create a Folium map centered on an initial location (e.g., Paris)
     m = folium.Map(location=[48.8566, 2.3522], zoom_start=12)
@@ -314,6 +337,7 @@ def map_velo():
 
 map_velo()
 
+@st.cache_data()
 def ratio_velo():
     # Calculate the ratios
     parking_data['Bicycle Ratios'] = parking_data['nb_velo'] / parking_data['nb_places']
@@ -334,6 +358,7 @@ def ratio_velo():
 
 ratio_velo()
 
+@st.cache_data()
 def sidebar():
     # Sidebar for links LinkedIn and GitHub
     st.sidebar.subheader("Mes liens")
@@ -346,7 +371,6 @@ def sidebar():
     st.sidebar.markdown(f"[Github]({github_link})")
 
 sidebar()
-
 
 
 
