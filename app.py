@@ -3,6 +3,7 @@ import pandas as pd
 import pydeck as pdk
 import requests
 from io import StringIO
+@st.cache_data()
 def load_data():
     api_url = "https://www.data.gouv.fr/fr/datasets/r/e32f7675-913b-4e01-b8c8-0a29733e4407"
     response = requests.get(api_url)
@@ -253,72 +254,78 @@ import altair as alt
 import folium
 from streamlit_folium import folium_static
 
-# Create a Folium map centered on an initial location (e.g., Paris)
-m = folium.Map(location=[48.8566, 2.3522], zoom_start=12)
+def map_elec():
+    # Create a Folium map centered on an initial location (e.g., Paris)
+    m = folium.Map(location=[48.8566, 2.3522], zoom_start=12)
 
-# Filter parking data for electric vehicles
-ev_parking_data = parking_data[parking_data['nb_voitures_electriques'] > 0]
+    # Filter parking data for electric vehicles
+    ev_parking_data = parking_data[parking_data['nb_voitures_electriques'] > 0]
 
-# Add markers for each parking with electric vehicles
-for index, row in ev_parking_data.iterrows():
-    folium.Marker(
-        location=[row['Ylat'], row['Xlong']],
-        popup=row['nom'],
-    ).add_to(m)
+    # Add markers for each parking with electric vehicles
+    for index, row in ev_parking_data.iterrows():
+        folium.Marker(
+            location=[row['Ylat'], row['Xlong']],
+            popup=row['nom'],
+        ).add_to(m)
 
-# Display the Folium map in Streamlit
-st.subheader("If you have an electric vehicle!")
-folium_static(m)
+    # Display the Folium map in Streamlit
+    st.subheader("If you have an electric vehicle!")
+    folium_static(m)
 
-# Create a new column "Electric Ratios" for the number of electric vehicle spaces relative to total spaces
-parking_data['Electric Ratios'] = parking_data['nb_voitures_electriques'] / parking_data['nb_places']
+def ratio_electrique():
+    # Create a new column "Electric Ratios" for the number of electric vehicle spaces relative to total spaces
+    parking_data['Electric Ratios'] = parking_data['nb_voitures_electriques'] / parking_data['nb_places']
 
-# Create an Altair histogram for the electric vehicle ratios
-histogram_ratios_electriques = alt.Chart(parking_data).mark_bar().encode(
-    alt.X('Electric Ratios:Q', bin=True, title='Electric Ratios / Total'),
-    alt.Y('count()', title='Number of parkings'),
-    color=alt.value('green')
-).properties(
-    width=400,
-    height=300,
-    title="Histogram of Ratios (Electric / Total) per parking"
-)
+    # Create an Altair histogram for the electric vehicle ratios
+    histogram_ratios_electriques = alt.Chart(parking_data).mark_bar().encode(
+        alt.X('Electric Ratios:Q', bin=True, title='Electric Ratios / Total'),
+        alt.Y('count()', title='Number of parkings'),
+        color=alt.value('green')
+    ).properties(
+        width=400,
+        height=300,
+        title="Histogram of Ratios (Electric / Total) per parking"
+    )
 
-histogram_ratios_electriques
+    histogram_ratios_electriques
 
-# Create a Folium map centered on an initial location (e.g., Paris)
-m = folium.Map(location=[48.8566, 2.3522], zoom_start=12)
+def map_velo():
+    # Create a Folium map centered on an initial location (e.g., Paris)
+    m = folium.Map(location=[48.8566, 2.3522], zoom_start=12)
 
-# Filter parking data for bicycle facilities
-bike_parking_data = parking_data[parking_data['nb_velo'] > 0]
+    # Filter parking data for bicycle facilities
+    bike_parking_data = parking_data[parking_data['nb_velo'] > 0]
 
-# Add markers for each bike parking facility
-for index, row in bike_parking_data.iterrows():
-    folium.Marker(
-        location=[row['Ylat'], row['Xlong']],
-        popup=row['nom'],
-    ).add_to(m)
+    # Add markers for each bike parking facility
+    for index, row in bike_parking_data.iterrows():
+        folium.Marker(
+            location=[row['Ylat'], row['Xlong']],
+            popup=row['nom'],
+        ).add_to(m)
 
-# Display the Folium map in Streamlit
-st.subheader("If you're a cyclist!")
-folium_static(m)
+    # Display the Folium map in Streamlit
+    st.subheader("If you're a cyclist!")
+    folium_static(m)
 
-# Calculate the ratios
-parking_data['Bicycle Ratios'] = parking_data['nb_velo'] / parking_data['nb_places']
 
-# Create a scatter plot of the bicycle ratios relative to the total number of parkings
-scatter_ratio_velo = alt.Chart(parking_data).mark_circle().encode(
-    x=alt.X('Bicycle Ratios:Q', title='Ratio (Bicycles / Total)'),
-    y=alt.Y('nb_places:Q', title='Number of parkings'),
-    tooltip=['nom:N'],
-    color=alt.value('blue')
-).properties(
-    width=400,
-    height=400,
-    title="Scatter Plot of Ratio (Bicycles / Total) per parking"
-)
 
-scatter_ratio_velo
+def ratio_velo():
+    # Calculate the ratios
+    parking_data['Bicycle Ratios'] = parking_data['nb_velo'] / parking_data['nb_places']
+
+    # Create a scatter plot of the bicycle ratios relative to the total number of parkings
+    scatter_ratio_velo = alt.Chart(parking_data).mark_circle().encode(
+        x=alt.X('Bicycle Ratios:Q', title='Ratio (Bicycles / Total)'),
+        y=alt.Y('nb_places:Q', title='Number of parkings'),
+        tooltip=['nom:N'],
+        color=alt.value('blue')
+    ).properties(
+        width=400,
+        height=400,
+        title="Scatter Plot of Ratio (Bicycles / Total) per parking"
+    )
+
+    scatter_ratio_velo
 
 
 def sidebar():
