@@ -321,16 +321,16 @@ scatter_ratio_velo = alt.Chart(parking_data).mark_circle().encode(
 scatter_ratio_velo
 
 
+def sidebar():
+    # Sidebar for links LinkedIn and GitHub
+    st.sidebar.subheader("Mes liens")
+    linkedin_link = "https://www.linkedin.com/in/jules-gravier-4806941b7/"
+    github_link = "https://github.com/juliogver"
 
-# Sidebar for links LinkedIn and GitHub
-st.sidebar.subheader("Mes liens")
-linkedin_link = "https://www.linkedin.com/in/jules-gravier-4806941b7/"
-github_link = "https://github.com/juliogver"
+    st.sidebar.subheader("GRAVIER JULES")
 
-st.sidebar.subheader("GRAVIER JULES")
-
-st.sidebar.markdown(f"[LinkedIn]({linkedin_link})")
-st.sidebar.markdown(f"[Github]({github_link})")
+    st.sidebar.markdown(f"[LinkedIn]({linkedin_link})")
+    st.sidebar.markdown(f"[Github]({github_link})")
 
 
 
